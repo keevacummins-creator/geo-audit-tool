@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GEO Audit Tool — B2B SaaS AI Visibility Scorer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Mono:wght@400;500&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg: #04080f;
+    --surface: #0c1420;
+    --border: #1a2535;
+    --accent: #0ea5e9;
+    --accent2: #6366f1;
+    --green: #22d3a5;
+    --amber: #f59e0b;
+    --red: #f43f5e;
+    --text: #e8f0fe;
+    --muted: #4a6080;
+    --subtle: #8aa0bc;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  body > .wrap {
+    width: 100%;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(14,165,233,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(14,165,233,0.03) 1px, transparent 1px);
+    background-size: 60px 60px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrap { max-width: 660px; margin: 0 auto; padding: 0 24px; position: relative; z-index: 1; }
+
+  /* ── HEADER ── */
+  header { padding: 48px 0 24px; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: rgba(14,165,233,0.08); border: 1px solid rgba(14,165,233,0.2);
+    border-radius: 99px; padding: 5px 14px; margin-bottom: 24px;
+  }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); box-shadow: 0 0 8px var(--accent); animation: pulse 2s ease infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+  .badge span { font-family: 'DM Mono', monospace; font-size: 11px; color: var(--accent); letter-spacing: 0.12em; }
+  h1 { font-family: 'Syne', sans-serif; font-size: clamp(28px,5vw,42px); font-weight: 800; line-height: 1.1; margin-bottom: 16px; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .subtitle { font-size: 15px; color: var(--subtle); line-height: 1.6; max-width: 520px; margin-bottom: 0; }
+
+  /* ── API KEY SETUP ── */
+  .setup-card {
+    background: rgba(14,165,233,0.04); border: 1px solid rgba(14,165,233,0.15);
+    border-radius: 16px; padding: 20px 24px; margin-bottom: 24px;
+    display: flex; align-items: flex-start; gap: 14px;
+  }
+  .setup-icon { font-size: 20px; margin-top: 2px; flex-shrink: 0; }
+  .setup-text { font-size: 13px; color: var(--subtle); line-height: 1.6; }
+  .setup-text a { color: var(--accent); text-decoration: none; }
+  .setup-text a:hover { text-decoration: underline; }
+  .setup-text strong { color: var(--text); }
+
+  /* ── FORM CARD ── */
+  .card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 32px; margin-bottom: 16px;
+    box-shadow: 0 24px 48px rgba(0,0,0,0.3);
+  }
+  label { font-size: 10px; font-weight: 600; color: var(--muted); letter-spacing: 0.14em; font-family: 'DM Mono', monospace; display: block; margin-bottom: 8px; }
+  input {
+    width: 100%; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 10px; padding: 14px 16px; color: var(--text);
+    font-size: 15px; font-family: 'DM Sans', sans-serif;
+    transition: border-color 0.2s, box-shadow 0.2s; outline: none;
+    margin-bottom: 16px;
+  }
+  input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(14,165,233,0.1); }
+  input::placeholder { color: var(--muted); }
+
+  .btn {
+    width: 100%; background: var(--accent); border: none; border-radius: 12px;
+    padding: 17px 24px; color: #fff; font-size: 16px; font-weight: 700;
+    font-family: 'DM Sans', sans-serif; cursor: pointer; transition: all 0.2s;
+    letter-spacing: 0.02em; position: relative; overflow: hidden;
+    margin-top: 4px;
+  }
+  .btn::after {
+    content: ''; position: absolute; inset: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), transparent);
+    pointer-events: none;
+  }
+  .btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(14,165,233,0.3); }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+  /* ── LOADING ── */
+  #loading {
+    display: none; background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 36px; text-align: center; margin-bottom: 16px;
+  }
+  .spinner {
+    width: 36px; height: 36px; border: 3px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    margin: 0 auto 16px; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-family: 'DM Mono', monospace; font-size: 13px; color: var(--muted); animation: pulse 1.5s ease infinite; }
+
+  /* ── ERROR ── */
+  #error {
+    display: none; background: rgba(244,63,94,0.06); border: 1px solid rgba(244,63,94,0.2);
+    border-radius: 12px; padding: 16px 20px; color: #fda4af;
+    font-size: 13px; font-family: 'DM Mono', monospace; line-height: 1.6; margin-bottom: 16px;
+  }
+
+  /* ── RESULTS ── */
+  #results { display: none; }
+
+  .score-hero {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 28px; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 24px;
+  }
+  .score-ring-wrap { position: relative; width: 120px; height: 120px; flex-shrink: 0; }
+  .score-ring-wrap svg { transform: rotate(-90deg); }
+  .score-number {
+    position: absolute; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+  }
+  .score-val { font-family: 'DM Mono', monospace; font-size: 32px; font-weight: 500; line-height: 1; }
+  .score-denom { font-size: 11px; color: var(--muted); letter-spacing: 0.1em; }
+  .score-meta { flex: 1; }
+  .company-name { font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 800; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .verdict-badge {
+    font-size: 10px; font-weight: 700; letter-spacing: 0.1em;
+    font-family: 'DM Mono', monospace; border-radius: 99px; padding: 3px 10px;
+    border: 1px solid;
+  }
+  .summary-text { font-size: 13px; color: var(--subtle); line-height: 1.65; }
+
+  /* ── DIMENSION BARS ── */
+  .dimensions { display: flex; flex-direction: column; gap: 8px; margin-bottom: 12px; }
+  .dim-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px 20px; cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .dim-card:hover { border-color: var(--accent); }
+  .dim-header { display: flex; align-items: center; gap: 12px; }
+  .dim-info { flex: 1; }
+  .dim-top { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .dim-name { font-size: 13px; font-weight: 600; color: var(--text); }
+  .dim-score { font-size: 13px; font-weight: 700; font-family: 'DM Mono', monospace; }
+  .dim-bar-bg { height: 5px; background: var(--border); border-radius: 99px; overflow: hidden; }
+  .dim-bar-fill { height: 100%; border-radius: 99px; transition: width 1s cubic-bezier(.4,0,.2,1); }
+  .dim-chevron { color: var(--muted); font-size: 12px; transition: transform 0.2s; flex-shrink: 0; }
+  .dim-chevron.open { transform: rotate(180deg); }
+  .dim-detail {
+    display: none; margin-top: 14px; padding-top: 14px;
+    border-top: 1px solid var(--border);
+  }
+  .dim-detail.open { display: block; }
+  .detail-label { font-size: 10px; font-weight: 700; letter-spacing: 0.12em; font-family: 'DM Mono', monospace; color: var(--muted); margin-bottom: 4px; }
+  .detail-text { font-size: 13px; color: var(--subtle); line-height: 1.6; margin-bottom: 12px; }
+  .detail-rec { font-size: 13px; color: var(--text); line-height: 1.6; }
+
+  /* ── TOP WIN ── */
+  .top-win {
+    background: rgba(34,211,165,0.05); border: 1px solid rgba(34,211,165,0.2);
+    border-radius: 14px; padding: 20px; margin-bottom: 12px;
+  }
+  .top-win-label { font-size: 10px; font-weight: 700; color: var(--green); letter-spacing: 0.15em; font-family: 'DM Mono', monospace; margin-bottom: 8px; }
+  .top-win-text { font-size: 14px; color: #a7f3d0; line-height: 1.65; }
+
+
+
+  /* ── FOOTER ── */
+  footer { padding: 24px 0; border-top: 1px solid var(--border); text-align: center; }
+  footer p { font-size: 12px; color: var(--muted); }
+  footer a { color: var(--accent); text-decoration: none; }
+
+  /* ── STATS BAR ── */
+  .stats-bar {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0; margin-bottom: 24px; background: var(--surface);
+    border: 1px solid var(--border); border-radius: 14px; padding: 16px 24px;
+  }
+  .stat { display: flex; flex-direction: column; align-items: center; flex: 1; }
+  .stat-num { font-family: 'DM Mono', monospace; font-size: 18px; font-weight: 500; color: var(--accent); line-height: 1.2; }
+  .stat-label { font-size: 11px; color: var(--muted); margin-top: 3px; text-align: center; }
+  .stat-divider { width: 1px; height: 32px; background: var(--border); flex-shrink: 0; }
+
+  /* ── MOBILE ── */
+  @media (max-width: 600px) {
+    header { padding: 36px 0 28px; }
+    h1 { font-size: 28px; }
+    .subtitle { font-size: 14px; }
+    .card { padding: 20px; }
+    .score-hero { flex-direction: column; align-items: flex-start; gap: 16px; padding: 20px; }
+    .score-ring-wrap { width: 100px; height: 100px; }
+    .score-ring-wrap svg { width: 100px; height: 100px; }
+    .score-val { font-size: 26px; }
+    .company-name { font-size: 17px; }
+    .dim-card { padding: 14px 16px; }
+    .top-win { padding: 16px; }
+    .btn { padding: 14px 20px; font-size: 14px; }
+    input { padding: 12px 14px; font-size: 14px; }
+    #loading { padding: 28px 20px; }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .fade-in { animation: fadeUp 0.5s ease both; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="fade-in">
+    <div class="badge"><div class="badge-dot"></div><span>GEO AUDIT TOOL</span></div>
+    <h1>Is your B2B SaaS<br/><em>visible to AI buyers?</em></h1>
+    <p class="subtitle">Score any company's Generative Engine Optimization — how well AI tools like ChatGPT, Claude & Perplexity represent them when buyers are researching solutions.</p>
+  </header>
+
+
+
+  <div class="stats-bar fade-in">
+    <div class="stat"><span class="stat-num">5</span><span class="stat-label">GEO dimensions scored</span></div>
+    <div class="stat-divider"></div>
+    <div class="stat"><span class="stat-num">AI</span><span class="stat-label">Powered analysis</span></div>
+    <div class="stat-divider"></div>
+    <div class="stat"><span class="stat-num">60s</span><span class="stat-label">To get your score</span></div>
+  </div>
+
+  <div class="card fade-in">
+    <input type="hidden" id="apiKey" value="protected" />
+    <label>COMPANY NAME</label>
+    <input type="text" id="company" placeholder="e.g. HubSpot" value="HubSpot" />
+    <label>CATEGORY / SPACE</label>
+    <input type="text" id="category" placeholder="e.g. CRM & Marketing Automation" value="CRM & Marketing Automation" />
+    <button class="btn" id="runBtn" onclick="runAudit()">Run GEO Audit →</button>
+  </div>
+
+  <div id="loading">
+    <div class="spinner"></div>
+    <p class="loading-text" id="loadingText">Analysing AI visibility...</p>
+  </div>
+
+  <div id="error"></div>
+
+  <div id="results">
+    <div class="score-hero fade-in">
+      <div class="score-ring-wrap">
+        <svg width="120" height="120" viewBox="0 0 120 120">
+          <circle cx="60" cy="60" r="50" fill="none" stroke="#1a2535" stroke-width="10"/>
+          <circle id="scoreArc" cx="60" cy="60" r="50" fill="none" stroke="#0ea5e9" stroke-width="10" stroke-linecap="round" stroke-dasharray="0 314"/>
+        </svg>
+        <div class="score-number">
+          <span class="score-val" id="scoreVal">0</span>
+          <span class="score-denom">/100</span>
+        </div>
+      </div>
+      <div class="score-meta">
+        <div class="company-name">
+          <span id="companyDisplay"></span>
+          <span class="verdict-badge" id="verdictBadge"></span>
+        </div>
+        <p class="summary-text" id="summaryText"></p>
+      </div>
+    </div>
+
+    <div class="dimensions" id="dimensionsWrap"></div>
+
+    <div class="top-win fade-in">
+      <div class="top-win-label">⚡ HIGHEST IMPACT ACTION</div>
+      <p class="top-win-text" id="topWinText"></p>
+    </div>
+
+
+  </div>
+
+  <footer>
+    <p>Built with Claude · <a href="https://anthropic.com" target="_blank">Anthropic</a></p>
+  </footer>
+
+</div>
+
+<script>
+const STEPS = [
+  "Querying AI search patterns...",
+  "Evaluating brand entity clarity...",
+  "Checking thought leadership signals...",
+  "Scoring third-party validation...",
+  "Analysing competitive positioning...",
+  "Generating recommendations..."
+];
+
+function getColor(pct) {
+  if (pct >= 70) return "#22d3a5";
+  if (pct >= 45) return "#f59e0b";
+  return "#f43f5e";
+}
+
+function showError(msg) {
+  const el = document.getElementById("error");
+  el.textContent = msg;
+  el.style.display = "block";
+}
+
+function setScore(score) {
+  const circ = 2 * Math.PI * 50;
+  const fill = (score / 100) * circ;
+  const arc = document.getElementById("scoreArc");
+  const color = getColor(score);
+  arc.setAttribute("stroke", color);
+  arc.setAttribute("stroke-dasharray", `${fill} ${circ}`);
+  document.getElementById("scoreVal").textContent = score;
+  document.getElementById("scoreVal").style.color = color;
+}
+
+function buildDimensions(dims) {
+  const wrap = document.getElementById("dimensionsWrap");
+  wrap.innerHTML = "";
+  dims.forEach((d, i) => {
+    const pct = (d.score / 20) * 100;
+    const color = getColor(pct);
+    const card = document.createElement("div");
+    card.className = "dim-card";
+    card.style.animationDelay = `${i * 0.07}s`;
+    card.innerHTML = `
+      <div class="dim-header">
+        <div class="dim-info">
+          <div class="dim-top">
+            <span class="dim-name">${d.name}</span>
+            <span class="dim-score" style="color:${color}">${d.score}/20</span>
+          </div>
+          <div class="dim-bar-bg">
+            <div class="dim-bar-fill" style="width:0%;background:${color}" data-width="${pct}"></div>
+          </div>
+        </div>
+        <span class="dim-chevron">▼</span>
+      </div>
+      <div class="dim-detail">
+        <div class="detail-label">FINDING</div>
+        <p class="detail-text">${d.finding}</p>
+        <div class="detail-label" style="color:${color}">RECOMMENDATION</div>
+        <p class="detail-rec">${d.recommendation}</p>
+      </div>
+    `;
+    card.addEventListener("click", () => {
+      const detail = card.querySelector(".dim-detail");
+      const chevron = card.querySelector(".dim-chevron");
+      detail.classList.toggle("open");
+      chevron.classList.toggle("open");
+    });
+    wrap.appendChild(card);
+    // Animate bars after paint
+    setTimeout(() => {
+      card.querySelector(".dim-bar-fill").style.width = pct + "%";
+    }, 100 + i * 70);
+  });
+}
+
+async function runAudit() {
+  const apiKey = document.getElementById("apiKey").value.trim();
+  const company = document.getElementById("company").value.trim();
+  const category = document.getElementById("category").value.trim();
+
+  document.getElementById("error").style.display = "none";
+  document.getElementById("results").style.display = "none";
+
+  if (!company) return showError("Please enter a company name.");
+  if (!category) return showError("Please enter a category.");
+
+  document.getElementById("runBtn").disabled = true;
+  document.getElementById("loading").style.display = "block";
+
+  let step = 0;
+  const interval = setInterval(() => {
+    step = (step + 1) % STEPS.length;
+    document.getElementById("loadingText").textContent = STEPS[step];
+  }, 900);
+
+  const prompt = `You are a Generative Engine Optimization (GEO) expert. Analyse how well "${company}", a ${category} company, shows up when B2B buyers use AI tools like ChatGPT, Claude, Perplexity, or Gemini to research solutions.
+
+Score them out of 100 across 5 dimensions (0-20 each):
+1. Brand Clarity - How clearly can AI describe what they do?
+2. Thought Leadership - Do they produce authoritative, citable content?
+3. Third-Party Validation - Are they mentioned in reviews, press, analyst reports?
+4. Entity Definition - Is their positioning clear enough for AI to represent accurately?
+5. Competitive Differentiation - Does AI know how they differ from competitors?
+
+Respond ONLY with a JSON object. No markdown, no backticks, no explanation. Just the raw JSON:
+{"overall":72,"summary":"Two sentence overall verdict.","dimensions":[{"name":"Brand Clarity","score":16,"finding":"Specific finding.","recommendation":"Actionable fix."},{"name":"Thought Leadership","score":14,"finding":"Specific finding.","recommendation":"Actionable fix."},{"name":"Third-Party Validation","score":15,"finding":"Specific finding.","recommendation":"Actionable fix."},{"name":"Entity Definition","score":14,"finding":"Specific finding.","recommendation":"Actionable fix."},{"name":"Competitive Differentiation","score":13,"finding":"Specific finding.","recommendation":"Actionable fix."}],"topWin":"Most impactful action.","verdict":"Moderate"}
+
+Replace all values with real analysis of ${company}. verdict must be Strong, Moderate, or Weak.`;
+
+  try {
+    const res = await fetch("https://tiny-dawn-cd07.keevacummins.workers.dev", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 1024,
+        messages: [{ role: "user", content: prompt }]
+      })
+    });
+
+    clearInterval(interval);
+    const data = await res.json();
+
+    if (!res.ok) throw new Error(data?.error?.message || `API error ${res.status}`);
+
+    const raw = data.content.map(b => b.text || "").join("").trim();
+    const match = raw.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("No JSON in response. Got: " + raw.substring(0, 200));
+
+    const result = JSON.parse(match[0]);
+    if (!result.overall || !result.dimensions || !result.verdict) {
+      throw new Error("Incomplete response. Keys: " + Object.keys(result).join(", "));
+    }
+
+    // Render
+    document.getElementById("loading").style.display = "none";
+    document.getElementById("results").style.display = "block";
+
+    setScore(result.overall);
+    document.getElementById("companyDisplay").textContent = company;
+
+    const color = getColor(result.overall);
+    const badge = document.getElementById("verdictBadge");
+    badge.textContent = result.verdict;
+    badge.style.color = color;
+    badge.style.background = color + "15";
+    badge.style.borderColor = color + "40";
+
+    document.getElementById("summaryText").textContent = result.summary;
+    buildDimensions(result.dimensions);
+    document.getElementById("topWinText").textContent = result.topWin;
+
+  } catch (e) {
+    clearInterval(interval);
+    document.getElementById("loading").style.display = "none";
+    showError("Error: " + e.message);
+  } finally {
+    document.getElementById("runBtn").disabled = false;
+  }
+}
+
+// Allow Enter key to submit
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && !document.getElementById("runBtn").disabled) runAudit();
+});
+</script>
+</body>
+</html>
