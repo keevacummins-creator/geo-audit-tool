@@ -209,17 +209,10 @@
     <p class="subtitle">Score any company's Generative Engine Optimization — how well AI tools like ChatGPT, Claude & Perplexity represent them when buyers are researching solutions.</p>
   </header>
 
-  <div class="setup-card fade-in">
-    <div class="setup-icon">🔑</div>
-    <div class="setup-text">
-      <strong>You need a free Anthropic API key to use this tool.</strong><br/>
-      Get one at <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a> — free tier includes enough credits to run dozens of audits.
-    </div>
-  </div>
+
 
   <div class="card fade-in">
-    <label>YOUR ANTHROPIC API KEY</label>
-    <input type="password" id="apiKey" placeholder="sk-ant-..." autocomplete="off" />
+    <input type="hidden" id="apiKey" value="protected" />
     <label>COMPANY NAME</label>
     <input type="text" id="company" placeholder="e.g. HubSpot" value="HubSpot" />
     <label>CATEGORY / SPACE</label>
@@ -389,8 +382,7 @@ Replace all values with real analysis of ${company}. verdict must be Strong, Mod
     const res = await fetch("https://tiny-dawn-cd07.keevacummins.workers.dev", {
       method: "POST",
       headers: {
-        "Content-Type": "application/json",
-        "x-api-key": apiKey
+        "Content-Type": "application/json"
       },
       body: JSON.stringify({
         model: "claude-haiku-4-5-20251001",
