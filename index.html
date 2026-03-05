@@ -351,7 +351,6 @@ async function runAudit() {
   document.getElementById("error").style.display = "none";
   document.getElementById("results").style.display = "none";
 
-  if (!apiKey) return showError("Please enter your Anthropic API key.");
   if (!company) return showError("Please enter a company name.");
   if (!category) return showError("Please enter a category.");
 
